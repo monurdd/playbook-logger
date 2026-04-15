@@ -1,0 +1,15 @@
+---
+- name: Install & Delete 
+  hosts: ubuntu-VMs
+  become: yes 
+  tasks: 
+    - name: Install & Delete Loop
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+        update_cache: yes
+      loop:
+        - vim
+        - net-tools
+        - nano

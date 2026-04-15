@@ -1,0 +1,7 @@
+[ubuntu-VMs]
+192.168.1.107
+192.168.1.108
+
+[all:vars]
+ansible_user = onur
+ansible_ssh_private_key_file= ~/.ssh/id_rsa
