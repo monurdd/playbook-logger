@@ -12,8 +12,35 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super().__init__()
         self.session_id = str(uuid.uuid4())
-        self.task_start_times = {} 
+        self.task_start_times = {}
+        self.playbook_name = None
+        self.play_name = None
         self.log_file = f"./logs/{self.session_id}.jsonl"
+
+    def v2_playbook_on_start(self, playbook):
+        # determine a friendly playbook name and update log filename
+        file_attr = getattr(playbook, "_file_name", None)
+        if not file_attr:
+            file_attr = getattr(playbook, "name", None)
+
+        if file_attr:
+            base = os.path.basename(file_attr)
+            name, _ = os.path.splitext(base)
+            safe_name = name.replace(" ", "_")
+        else:
+            safe_name = "unknown_playbook"
+
+        self.playbook_name = safe_name
+        self.log_file = f"./logs/{self.playbook_name}-{self.session_id}.jsonl"
+
+    def v2_playbook_on_play_start(self, play):
+        # capture the current play name
+        play_name = getattr(play, "name", None)
+        if play_name:
+            safe = play_name.strip().replace(" ", "_")
+        else:
+            safe = "unnamed_play"
+        self.play_name = safe
 
     def _write_log(self, payload):
         os.makedirs("./logs", exist_ok=True)
@@ -57,6 +84,8 @@ class CallbackModule(CallbackBase):
             payload = {
                 "@timestamp": datetime.utcnow().isoformat(),
                 "session_id": self.session_id,
+                "playbook": self.playbook_name,
+                "play": self.play_name,
                 "task": task_name,
                 "host": result._host.get_name(),
                 "status": "ok",
@@ -85,7 +114,9 @@ class CallbackModule(CallbackBase):
         payload = {
             "@timestamp": datetime.utcnow().isoformat(),
             "session_id": self.session_id,
+            "playbook": self.playbook_name,
             "task": task_name,
+            "play": self.play_name,
             "host": result._host.get_name(),
             "status": "failed",
             "changed": data.get("changed", False),
