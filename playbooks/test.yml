@@ -1,0 +1,34 @@
+---
+- name: Package Management
+  hosts: ubuntu-VMs
+  become: yes
+  tasks:
+    - name: Install nginx and ssh
+      apt:
+        name:
+          - nginx
+          - openssh-server
+        state: present
+        update_cache: yes
+
+- name: Service Management 
+  hosts: ubuntu-VMs
+  become: yes
+  tasks:
+    - name: Stopping Loop
+      service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: no
+      loop:
+        - nginx
+        - ssh
+    
+    - name: Starting Loop
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - nginx
+        - ssh
