@@ -45,16 +45,23 @@ class CallbackModule(CallbackBase):
         try:
             data = result._result
             task = getattr(result, "_task", None)
-            task_uuid = getattr(task, "_uuid", None)
+            task_name = None
+            if task:
+                try:
+                    task_name = task.get_name().strip()
+                except Exception:
+                    task_name = getattr(result, "task_name", "unknown")
+            else:
+                task_name = getattr(result, "task_name", "unknown")
 
             payload = {
                 "@timestamp": datetime.utcnow().isoformat(),
                 "session_id": self.session_id,
-                "task": getattr(result, "task_name", "unknown"),
+                "task": task_name,
                 "host": result._host.get_name(),
                 "status": "ok",
                 "changed": data.get("changed", False),
-                "duration_ms": self._get_duration_ms(task_uuid) if task_uuid else None,
+                "duration_ms": self._get_duration_ms(task_name),
                 "msg": data.get("msg"),
                 "module": self._get_module_name(result),
                 "item_count": len(data.get("results") or []),
@@ -66,7 +73,14 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         data = result._result
-        task_uuid = result._task._uuid
+        task = getattr(result, "_task", None)
+        if task:
+            try:
+                task_name = task.get_name().strip()
+            except Exception:
+                task_name = getattr(result, "task_name", "unknown")
+        else:
+            task_name = getattr(result, "task_name", "unknown")
 
         payload = {
             "@timestamp": datetime.utcnow().isoformat(),

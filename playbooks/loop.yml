@@ -6,8 +6,7 @@
     - name: Install & Delete Loop
       apt:
         name: "{{ item }}"
-        state: absent
-        purge: yes
+        state: present
         update_cache: yes
       loop:
         - vim
